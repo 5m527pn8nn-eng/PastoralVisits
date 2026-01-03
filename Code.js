@@ -43,6 +43,10 @@
       if(sheetName == "Schedule For Pastoral Visits to Nursing Homes and the Homebound"){
         continue;
       }
+      if(sheetName == "Institution Priority"){
+        continue;
+      }
+
       //Schedule for Pastoral Visits to Nursing Home
       if(sheetName == "Report"){ 
         reportSheet = sheets[i];
