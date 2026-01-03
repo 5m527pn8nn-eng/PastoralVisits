@@ -8,6 +8,8 @@ const PRIORITY_CONFIG = {
   targetInstitutionCount: 10,
   avgWeight: 0.3,
   veryOldDays: 9999,
+  blankDateThreshold: 3,
+  blankDateWeight: 5,
 };
 
 function buildInstitutionPriority() {
@@ -40,6 +42,7 @@ function buildInstitutionPriority() {
     if (!institution) continue;
 
     const daysSince = daysSince_(row[dateIndex], now, PRIORITY_CONFIG.veryOldDays);
+    const isBlankDate = !parseDate_(row[dateIndex]);
     if (!statsMap[institution]) {
       statsMap[institution] = {
         institution: institution,
@@ -47,6 +50,7 @@ function buildInstitutionPriority() {
         sumDays: 0,
         maxDaysSinceLastSeen: 0,
         daysSince: [],
+        blankDateCount: 0,
       };
     }
 
@@ -57,15 +61,22 @@ function buildInstitutionPriority() {
       stats.maxDaysSinceLastSeen = daysSince;
     }
     stats.daysSince.push(daysSince);
+    if (isBlankDate) {
+      stats.blankDateCount++;
+    }
   }
 
   const statsList = Object.keys(statsMap).map(key => {
     const stats = statsMap[key];
     const avgDays = stats.countPeople ? stats.sumDays / stats.countPeople : 0;
     const medianDays = median_(stats.daysSince);
+    const blankDateBoost = stats.blankDateCount >= PRIORITY_CONFIG.blankDateThreshold
+      ? stats.blankDateCount * PRIORITY_CONFIG.blankDateWeight
+      : 0;
     const score = stats.maxDaysSinceLastSeen
       + (avgDays * PRIORITY_CONFIG.avgWeight)
-      + (Math.log(stats.countPeople + 1) * PRIORITY_CONFIG.sizeWeight);
+      + (Math.log(stats.countPeople + 1) * PRIORITY_CONFIG.sizeWeight)
+      + blankDateBoost;
 
     return {
       institution: stats.institution,
@@ -207,21 +218,30 @@ function findHeaderIndex_(headers, candidates) {
 }
 
 function daysSince_(value, now, veryOldDays) {
-  let date = null;
-  if (value instanceof Date && !isNaN(value.getTime())) {
-    date = value;
-  } else if (typeof value === "string" && value.trim() !== "") {
-    const parsed = new Date(value);
-    if (!isNaN(parsed.getTime())) date = parsed;
-  } else if (typeof value === "number") {
-    const parsed = new Date(value);
-    if (!isNaN(parsed.getTime())) date = parsed;
-  }
+  const date = parseDate_(value);
 
   if (!date) return veryOldDays;
   let diff = Math.floor((now.getTime() - date.getTime()) / 86400000);
   if (diff < 0) diff = 0;
   return diff;
+}
+
+function parseDate_(value) {
+  if (value instanceof Date && !isNaN(value.getTime())) {
+    return value;
+  }
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    if (trimmed === "") return null;
+    const parsed = new Date(trimmed);
+    if (!isNaN(parsed.getTime())) return parsed;
+    return null;
+  }
+  if (typeof value === "number") {
+    const parsed = new Date(value);
+    if (!isNaN(parsed.getTime())) return parsed;
+  }
+  return null;
 }
 
 function median_(values) {
