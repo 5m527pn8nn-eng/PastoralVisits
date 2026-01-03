@@ -186,22 +186,8 @@
     row++
     reportSheet.getRange(row,1).setValue("Total Sum Of All Blessings Given At All Facilities");
     reportSheet.getRange(row,2).setValue(totalSumOfAllBlessingsAtAllFacilities);
-    /*historySheet.clear();
-    var rowToStart = 1; //historySheet.getLastRow()+1;
-    historySheet.getRange(rowToStart,1).setValue("Institution");
-    historySheet.getRange(rowToStart,2).setValue("Name");
-    historySheet.getRange(rowToStart,3).setValue("Room");
-    historySheet.getRange(rowToStart,4).setValue("Phone");
-    historySheet.getRange(rowToStart,5).setValue("Date Last Seen");
-    historySheet.getRange(rowToStart,5).setValue("PriestDate Last Seen");
-    historySheet.getRange(rowToStart,6).setValue("Eucharist Received"); // filled in by Priest
-    historySheet.getRange(rowToStart,7).setValue("Annointed"); // filled in by Priest
-    historySheet.getRange(rowToStart,8).setValue("Apostolic Pardon"); // filled in by Priest
-    historySheet.getRange(rowToStart,9).setValue("Blessing Only"); // filled in by Priest
     
-    rowToStart++
-    historySheet.getRange(1, 3, reportingObjectArray.length).setNumberFormat("@STRING@");
-*/
+    
     reportingObjectArray.sort((a, b) => {
        // Compare institutions first
        if (a.institution < b.institution) return -1;
@@ -238,11 +224,6 @@
     sheet.getRange(rowToStart,4).setValue("Phone");
     sheet.getRange(rowToStart,5).setValue("Date Last Seen");
     sheet.getRange(rowToStart,6).setValue("Priest Comments"); //History from institutional sheets
-    sheet.getRange(rowToStart,7).setValue("Eucharist Received"); // filled in by Priest
-    sheet.getRange(rowToStart,8).setValue("Annointed"); // filled in by Priest
-    sheet.getRange(rowToStart,9).setValue("Apostolic Pardon"); // filled in by Priest
-    sheet.getRange(rowToStart,10).setValue("Blessing Only"); // filled in by Priest
- 
     
     rowToStart++
     sheet.getRange(1, 3, reportingArray.length).setNumberFormat("@STRING@");
@@ -284,25 +265,6 @@
     });
     return dateLastSeenArray[0]// should have the latest date
   }
-  //function onEdit(e){
-  //  _sum("E1", "A1")
-  /*  var sheet = e.source.getActiveSheet();
-    var idCol = e.range.getColumn();
-    var idRow = e.range.getRow();
-    if(sheet.getName() == "Report"){ 
-      return;
-    }
-    if ( idCol == 7 ) {
-      //var Value = e.range.offset(0, -2).getValues();
-      //if ( Value == "" ) {
-        var vartoday = getDate();  //Gets the current date//
-        //sheet.getRange(idRow, 2).setValue( vartoday ); //Inserts into column 2 of the current row//
-        var u = Session.getEffectiveUser().getUsername();  //Gets the username of the editor//
-        sheet.getRange(idRow, 10).setValue(u); //Inserts into column 7 of the current row//
-      //}
-    }
-    */
-  //}
   function testOnEdit(){
     var beginRow = 14
     var endrow = 14
@@ -344,15 +306,6 @@
     'fitToHeight': false   // Fit to page height
   };
   
-  /*var newSpreadsheet = SpreadsheetApp.create("Temporary Spreadsheet for Printing");
-  var newSheet = newSpreadsheet.getActiveSheet();
-  
-  rangeToPrint.copyTo(newSheet.getRange("A1"), { contentsOnly: true });
-  
-  var url = newSpreadsheet.getUrl();
-  var pdf = DriveApp.getFileById(newSpreadsheet.getId()).getAs('application/pdf').getBytes();
-  var attach = { fileName: "PrintedRange.pdf", content: pdf, mimeType: 'application/pdf' };
-  */
   var url = sSheet.getUrl();
   var pdf = DriveApp.getFileById(sSheet.getId()).getAs('application/pdf').getBytes();
  
@@ -370,21 +323,6 @@
   // Delete the temporary spreadsheet
   newSpreadsheet.setTrashed(true);
 }
-/*```
-
-To use this script:
-
-1. Open your Google Sheets document.
-2. Click on "Extensions" in the top menu and then select "Apps Script."
-3. Delete any code in the script editor and paste the provided code.
-4. Save the script (Ctrl + S or Command + S).
-5. Modify the `rangeToPrint` variable to set the desired range you want to print.
-6. Run the function by clicking the play button (▶️) or by pressing Ctrl + Enter or Command + Enter.
-
-This script creates a temporary spreadsheet, copies the specified range into it, converts the spreadsheet to PDF, attaches the PDF to an email, and sends it to the default printer for printing. The `printOptions` object allows you to configure printing settings. After the PDF is sent to the printer, the temporary spreadsheet is deleted.
-
-Please note that this script uses the `MailApp` service to send an email with the PDF attachment to the printer, which requires a Gmail account. Also, the script needs authorization to send emails on your behalf. Make sure to review and adjust the settings and details as needed for your specific use case.
-*/
 function sortSheetsAsc() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var sheets = ss.getSheets();
@@ -542,11 +480,6 @@ function buildAndEmailReportFromSelection() {
   .setFontWeight("bold")
   .setVerticalAlignment("middle");
 
-  /*sheet.getRange(3, 1, output.length, TOTAL_COLS)
-       .setFontFamily("Arial")
-       .setFontSize(14)
-       .setVerticalAlignment("middle");
-*/
   // Add checkboxes to sacramental columns for data rows
   // Columns: 5 Eucharist, 6 Anointed, 7 Apostolic Pardon, 9 Blessing Only
   if (output.length > 0) {
@@ -606,6 +539,9 @@ function onOpen() {
     {name: 'Export Selected rows to PDF. Select the history sheet.',functionName:'buildAndEmailReportFromSelection'}
   ];
   spreadsheet.addMenu('Sheet Tools', menuItems);
+  if (typeof addPastoralCareMenu_ === "function") {
+    addPastoralCareMenu_();
+  }
 }
 
   

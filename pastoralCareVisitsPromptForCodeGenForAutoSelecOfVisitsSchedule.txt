@@ -1,0 +1,47 @@
+  You are writing Google Apps Script to run inside Google Sheets.
+
+  Context:
+  - I have a sheet named "History Sheet".
+  - Columns (by header row): Institution,Name,Room,Phone,Date Last Seen,Priest Comments
+  - Each row is one person/resident; Institution groups them, then Date Last Seen sorts them.
+  - I already have a separate script that creates a "Visit Schedule" from rows manually selected in "History Sheet". 
+  		That Function is called buildAndEmailReportFromSelection. It currently takes no parameters are it is called from the menu
+  		and picks the rows based on the cell selection in the UI
+  - I want a script stored in a new file called VisitsPriority.js that ranks institutions by how overdue they are (based on Date Last Seen), BUT does not
+  overweight large institutions so smaller ones still get picked when overdue.
+  - This should be repeatable, so it needs to produce a consistent “selection” list I can feed to the
+  existing schedule script.
+
+  Requirements:
+  1) Read the History Sheet, parse headers dynamically.
+  2) Group rows by Institution.
+  3) For each Institution compute:
+     - countPeople
+     - maxDaysSinceLastSeen
+     - avgDaysSinceLastSeen
+     - optionally medianDaysSinceLastSeen
+  4) Compute a priority score that favors overdue recency but doesn’t let large institutions dominate.
+     - Use a configurable scoring formula such as:
+       score = maxDays + (avgDays * 0.3) + (Math.log(countPeople + 1) * sizeWeight)
+     - Include config constants at the top: sizeWeight, smallInstitutionThreshold, smallInstitutionQuota,
+  overdueThresholdDays, targetInstitutionCount.
+     - Ensure small institutions still get selected: e.g., allocate a quota (like 20–30% of selected
+  institutions) to those with countPeople <= smallInstitutionThreshold, chosen by maxDays.
+     - Also ensure any institution with maxDays >= overdueThresholdDays is selected even if small.
+  5) Output:
+     - Create/overwrite a sheet "Institution Priority" with columns:
+       Institution, countPeople, maxDaysSinceLastSeen, avgDaysSinceLastSeen, score, selectedReason, selected
+  (TRUE/FALSE)
+     - Sort by score descending.
+  6) Mark selection back onto "History Sheet" in a column named "Select" (create if missing):
+     - For rows whose Institution is selected, write "YES", else blank.
+  7) Provide a menu item (e.g., “Pastoral Care → Build Institution Priority”) to run it. 
+  8) Also provide a function that can be triggered
+
+  Edge cases:
+  - If Date Last Seen is blank or invalid, treat as very old (e.g., maxDays = 9999 for that person).
+  - Support dates as actual Date objects or strings.
+  - Preserve existing data; only write to "Institution Priority" and the "Select" column.
+
+  Deliverable:
+  - Apps Script code only, ready to paste into Apps Script editor.
