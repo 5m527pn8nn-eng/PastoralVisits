@@ -78,7 +78,6 @@ function buildInstitutionPriority() {
         forceBottom: isDeprioritizedInstitution_(institution, deprioritizedNames),
         countPeople: 0,
         blankDateCount: 0,
-        nonBlankMaxDaysSince: 0,
         residentRows: [],
       };
     }
@@ -87,8 +86,6 @@ function buildInstitutionPriority() {
     stats.countPeople++;
     if (isBlankDate) {
       stats.blankDateCount++;
-    } else if (daysSince > stats.nonBlankMaxDaysSince) {
-      stats.nonBlankMaxDaysSince = daysSince;
     }
     stats.residentRows.push({
       rowIndex: r + 1,
@@ -99,7 +96,7 @@ function buildInstitutionPriority() {
 
   const statsList = Object.keys(statsMap).map(key => {
     const stats = statsMap[key];
-    let fallbackDaysSince = stats.nonBlankMaxDaysSince;
+    let fallbackDaysSince = maxNonBlankDays_(stats.residentRows);
 
     let sumDays = 0;
     let maxDays = 0;
@@ -136,7 +133,6 @@ function buildInstitutionPriority() {
       blankDateCountApplied: stats.blankDateCount >= PRIORITY_CONFIG.blankDateThreshold
         ? stats.blankDateCount
         : 0,
-      nonBlankMaxDaysSince: stats.nonBlankMaxDaysSince,
       blankDateBoost: blankDateBoost,
       score: score,
       selected: false,
@@ -150,7 +146,6 @@ function buildInstitutionPriority() {
   const outputHeaders = [
     "Institution",
     "countPeople",
-    "nonBlankMaxDaysSince",
     "maxDaysSinceLastSeen",
     "avgDaysSinceLastSeen",
     "medianDaysSinceLastSeen",
@@ -166,7 +161,6 @@ function buildInstitutionPriority() {
   const outputRows = statsList.map(stat => ([
     stat.institution,
     stat.countPeople,
-    stat.nonBlankMaxDaysSince,
     stat.maxDaysSinceLastSeen,
     round1_(stat.avgDaysSinceLastSeen),
     round1_(stat.medianDaysSinceLastSeen),
@@ -201,6 +195,7 @@ function addPastoralCareMenu_() {
   const ss = SpreadsheetApp.getActive();
   ss.addMenu("Pastoral Care", [
     { name: "Build Institution Priority", functionName: "buildInstitutionPriority" },
+    { name: "Build Visit Route", functionName: "buildVisitRouteFromSheet" },
   ]);
 }
 
@@ -358,6 +353,18 @@ function parseDate_(value) {
     if (!isNaN(parsed.getTime())) return parsed;
   }
   return null;
+}
+
+function maxNonBlankDays_(residentRows) {
+  let maxDays = 0;
+  for (let i = 0; i < residentRows.length; i++) {
+    if (!residentRows[i].isBlank && residentRows[i].daysSince !== null) {
+      if (residentRows[i].daysSince > maxDays) {
+        maxDays = residentRows[i].daysSince;
+      }
+    }
+  }
+  return maxDays;
 }
 
 function median_(values) {
