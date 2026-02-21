@@ -40,14 +40,9 @@
     const homeBoundOffsetForNoVisit = 3;
     for(var i = 0; i <= sheets.length-1; i++){
       var sheetName = sheets[i].getName();
-      if(sheetName == "Schedule For Pastoral Visits to Nursing Homes and the Homebound"){
+      if(ignoreSheet(sheetName)){
         continue;
       }
-      if(sheetName == "Institution Priority"){
-        continue;
-      }
-
-      //Schedule for Pastoral Visits to Nursing Home
       if(sheetName == "Report"){ 
         reportSheet = sheets[i];
         continue;
@@ -60,20 +55,10 @@
         historySheetByDateSeenOverall = sheets[i];
         continue;
       }
-
-      if(sheetName == "Eucharistic Ministers"){ 
-        continue;
-      }
-      if(sheetName == "Facility/EM Visit Schedules"){ 
-        continue;
-      }
-      if(sheetName == "Pastoral Care Visit Report"){ 
-        continue;
-      }
       if(sheetName == "Homebound"){ 
         ifHomeBoundSheet = true;
       }
-      
+
       try{
         sumOfResidentsAtFacility = 0;
         sumOfEucharistAtFacility = 0;
@@ -218,6 +203,11 @@
     runHistoryReports(historySheetByDateSeenOverall,reportingObjectArray);
     
     return outputStringToReturn;
+  }
+  function ignoreSheet(sheetName){
+    var ignoreSheets =["Schedule For Pastoral Visits to Nursing Homes and the Homebound","Institution Priority",
+                      "Visit Route Inputs","Eucharistic Ministers","Visit Route","Facility/EM Visit Schedules","Pastoral Care Visit Report"]
+    return ignoreSheets.includes(sheetName);
   }
   function runHistoryReports(sheet,reportingArray){
     sheet.clear();
@@ -383,7 +373,7 @@ function sortSheetsRandom() {
 // and emailing it to a recipient.
 
 function buildAndEmailReportFromSelection() {
-  const RECIPIENT = "tomh@incarnationparish.org";
+  const RECIPIENT = "prayersforthesickordeceased@incarnationparish.org";
   const REPORT_SHEET_NAME = "Pastoral Care Visit Report";
   const ROW_HEIGHT = 40; // slightly taller for handwriting in landscape
   const HEADER_ROW = [
